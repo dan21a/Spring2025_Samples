@@ -9,9 +9,11 @@ namespace Library.eCommerce.Services
 {
     public class ProductServiceProxy
     {
+        
         private ProductServiceProxy()
         {
             Products = new List<Product?>();
+            Cart = new Cart();
         }
 
         private int LastKey
@@ -46,8 +48,8 @@ namespace Library.eCommerce.Services
         }
 
         public List<Product?> Products { get; private set; }
-
-
+        public Cart Cart { get; private set; }
+        
         public Product AddOrUpdate(Product product)
         {
             if(product.Id == 0)
@@ -72,8 +74,58 @@ namespace Library.eCommerce.Services
 
             return product;
         }
+        public void AddToCart(int id, int quantity)
+        {
+            var product = Products.FirstOrDefault(p => p.Id == id);
+            if (product == null)
+            {
+                Console.WriteLine("Error: Product not found.");
+                return;
+            }
 
+            if (product.Quantity >= quantity)
+            {
+                Cart.AddtoCart(product, quantity);  
+                product.Quantity -= quantity;
+            }
+            else
+            {
+                Console.WriteLine("Error: Not enough stock available.");
+            }
+        }
+
+        public void RemoveFromCart(int id, int quantity)
+        {
+            var product = Cart.Items.FirstOrDefault(p => p.Id == id);
+            if (product == null)
+            {
+                Console.WriteLine("Error: Product not found in cart.");
+                return;
+            }
+
+            Cart.RemoveFromCart(product, quantity);
+            
+            var inventoryProduct = Products.FirstOrDefault(p => p.Id == id);
+            if (inventoryProduct != null)
+            {
+                inventoryProduct.Quantity += quantity;
+            }
+        }
+
+        public void Checkout()
+        {
+            Console.WriteLine("===== Receipt =====");
+            Console.WriteLine(Cart);
+            double subtotal = Cart.GetTotalPrice();
+            double tax = subtotal * 0.07;
+            double total = subtotal + tax;
+            Console.WriteLine($"Subtotal: ${subtotal:F2}");
+            Console.WriteLine($"Tax (7%): ${tax:F2}");
+            Console.WriteLine($"Total: ${total:F2}");
+            Console.WriteLine("===================");
+
+            // Clear cart after checkout
+            Cart = new Cart();
+        }
     }
-
-    
 }
